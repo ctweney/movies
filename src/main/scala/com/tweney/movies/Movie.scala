@@ -14,6 +14,8 @@ object Movie extends Loggable {
     sc.textFile(filename)
   }
 
+  // movies.dat format:
+  // MovieID::Title::Genres
   def convertData(input: RDD[String]): RDD[Movie] = {
     input
       .map(line => line.split("::"))
@@ -21,5 +23,10 @@ object Movie extends Loggable {
       fields(0).toInt,
       fields(1),
       fields(2).split('|').toSet))
+  }
+
+  def moviesById(input: RDD[Movie]): RDD[(Int, Movie)] = {
+    input
+      .map(movie => (movie.id, movie))
   }
 }

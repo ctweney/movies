@@ -23,4 +23,13 @@ class MovieTest extends SparkTest {
     movies.first().genres should be(Set[String]("Animation", "Children's", "Comedy"))
     movies.collect().length should be(3883)
   }
+
+  "a set of raw data" should "convert to a keyed RDD of Movies" in {
+    val data = Movie.loadData(sc, filename)
+    val movies = Movie.moviesById(Movie.convertData(data))
+    val first = movies.take(1)(0)
+    movies.collect().length should be(3883)
+    first._1 should be(1)
+    first._2.name should be("Toy Story (1995)")
+  }
 }
