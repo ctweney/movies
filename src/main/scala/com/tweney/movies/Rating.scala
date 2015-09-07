@@ -9,20 +9,16 @@ case class Rating(userId: Int, movieId: Int, rating: Int, timestamp: Int) extend
 }
 
 object Rating extends Loggable {
-  def loadData(sc: SparkContext, filename: String): RDD[String] = {
+  def rawData(sc: SparkContext, filename: String): RDD[String] = {
     logger.info("Loading ratings from '" + filename + "'")
     sc.textFile(filename)
   }
 
   // ratings.dat format:
   // UserID::MovieID::Rating::Timestamp
-  def convertData(input: RDD[String]): RDD[Rating] = {
+  def ratingsByMovieId(input: RDD[String]): RDD[(Int, Rating)] = {
     input
       .map(line => line.split("::"))
-      .map(fields => new Rating(
-      fields(0).toInt,
-      fields(1).toInt,
-      fields(2).toInt,
-      fields(3).toInt))
+      .map(fields => (fields(1).toInt, new Rating(fields(0).toInt, fields(1).toInt, fields(2).toInt, fields(3).toInt)))
   }
 }
