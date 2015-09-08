@@ -17,7 +17,6 @@ class MovieReaderTest extends SparkTest {
     val movies = reader.moviesById()
     movies.first()._1 should be(1)
     movies.first()._2.name should be("Toy Story (1995)")
-    movies.first()._2.genres should be(Set[String]("Animation", "Children's", "Comedy"))
     movies.collect().length should be(3883)
   }
 
@@ -60,4 +59,6 @@ class MovieReaderTest extends SparkTest {
     averages.first()._1 should be("Bonnie and Clyde (1967)")
     averages.first()._2 should be(4.096209912536443)
   }
+
+
 }

@@ -3,11 +3,14 @@ package com.tweney.movies
 import com.tweney.movies.util.Loggable
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.DataFrame
 
 class MovieReader(sc: SparkContext) extends Loggable {
 
   val movieFilename = "data/movielens/movies.dat"
   val ratingFilename = "data/movielens/ratings.dat"
+  val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+  import sqlContext.implicits._
 
   def rawData(filename: String): RDD[String] = {
     logger.info("Loading data from '" + filename + "'")
@@ -30,7 +33,7 @@ class MovieReader(sc: SparkContext) extends Loggable {
   def moviesById(): RDD[(Int, Movie)] = {
     rawMovies()
       .map(line => line.split("::"))
-      .map(fields => (fields(0).toInt, new Movie(fields(0).toInt, fields(1), fields(2).split('|').toSet)))
+      .map(fields => (fields(0).toInt, new Movie(fields(0).toInt, fields(1))))
       .cache()
   }
 
@@ -57,4 +60,25 @@ class MovieReader(sc: SparkContext) extends Loggable {
       .map(row => (row._2._1, row._2._2))
   }
 
+  def moviesDF(): DataFrame = {
+    rawMovies()
+      .map(line => line.split("::"))
+      .map(fields => new Movie(fields(0).toInt, fields(1)))
+      .toDF()
+  }
+
+  def ratingsDF(): DataFrame = {
+    rawRatings()
+      .map(line => line.split("::"))
+      .map(fields => new Rating(fields(0).toInt, fields(1).toInt, fields(2).toInt, fields(3).toInt))
+      .toDF()
+  }
+
+  def averagesBySQL(): DataFrame = {
+    val movies = moviesDF()
+    val ratings = ratingsDF()
+    movies.join(ratings, movies("id") === ratings("movieId"))
+      .groupBy(movies("name"))
+      .avg("rating")
+  }
 }
