@@ -1,11 +1,16 @@
 package com.tweney.movies.spark_tests
 
-import com.tweney.movies.{MovieReader, Movie}
+import com.tweney.movies.MovieReader
 
 class MovieReaderTest extends SparkTest {
 
   def reader = {
-    new MovieReader(sc)
+    new MovieReader(sc, "data/movielens_tiny")
+  }
+
+  "a reader in the default data directory" should "still be able to read data" in {
+    val defaultReader = new MovieReader(sc)
+    defaultReader.moviesById().collect().length should be(3883)
   }
 
   "a raw movies.dat file" should "be read into an RDD of String" in {
@@ -17,7 +22,7 @@ class MovieReaderTest extends SparkTest {
     val movies = reader.moviesById()
     movies.first()._1 should be(1)
     movies.first()._2.name should be("Toy Story (1995)")
-    movies.collect().length should be(3883)
+    movies.collect().length should be(50)
   }
 
   "a raw ratings.dat file" should "be read into an RDD of String" in {
@@ -32,33 +37,20 @@ class MovieReaderTest extends SparkTest {
     ratings.first()._2.userId should be(1)
     ratings.first()._2.movieId should be(1193)
     ratings.first()._2.rating should be(5)
-    ratings.collect().length should be(1000209)
+    ratings.collect().length should be(500)
   }
 
-  "averaging the ratings of movies with raw functional paradigm" should "return averages" in {
-    val movies = reader.rawMovies()
-      .map(line => line.split("::"))
-      .map(field => (field(0).toInt, field(1)))
-    val ratings = reader.rawRatings()
-      .map(line => line.split("::"))
-      .map(field => (field(1).toInt, field(2).toInt))
-
-    val averages = movies.join(ratings)
-      .aggregateByKey((0, 0, ""))(
-        (acc, value) => (acc._1 + value._2, acc._2 + 1, value._1),
-        (acc1, acc2) => (acc1._1 + acc2._1, acc1._2 + acc2._2, acc1._3))
-      .mapValues(sumCountName => (sumCountName._3, 1.0 * sumCountName._1 / sumCountName._2))
-    averages.take(20).foreach(l => println(l))
-    averages.first()._2._1 should be("Bonnie and Clyde (1967)")
-    averages.first()._2._2 should be(4.096209912536443)
-  }
-
-  "averaging the ratings using the class method" should "return averages" in {
+  "averaging the ratings using the functional method" should "return averages" in {
     val averages = reader.averages()
-    averages.take(20).foreach(l => println(l))
-    averages.first()._1 should be("Bonnie and Clyde (1967)")
-    averages.first()._2 should be(4.096209912536443)
+    averages.first()._1 should be("Babe (1995)")
+    averages.first()._2 should be(4.0)
   }
 
+  "the functional average and sql average methods" should "agree with one another" in {
+    val functionalAverages = reader.averages()
+    val sqlAverages = reader.averagesBySQL()
+    functionalAverages.first()._1 should be("Babe (1995)")
+    sqlAverages.filter("name = 'Babe (1995)'").take(1)(0)(1) should be(functionalAverages.first()._2)
+  }
 
 }

@@ -10,4 +10,4 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % "1.4.1"
 
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.4.1"
 
-initialCommands in console := """val sc = new org.apache.spark.SparkContext("local[4]", "movies")"""
+initialCommands in console := """val sc = new org.apache.spark.SparkContext("local[4]", "movies"); import com.tweney.movies._"""

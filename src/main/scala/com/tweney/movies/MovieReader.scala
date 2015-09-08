@@ -5,10 +5,10 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
 
-class MovieReader(sc: SparkContext) extends Loggable {
+class MovieReader(sc: SparkContext, dataDirectory: String = "data/movielens") extends Loggable {
 
-  val movieFilename = "data/movielens/movies.dat"
-  val ratingFilename = "data/movielens/ratings.dat"
+  val movieFilename = dataDirectory + "/movies.dat"
+  val ratingFilename = dataDirectory + "/ratings.dat"
   val sqlContext = new org.apache.spark.sql.SQLContext(sc)
   import sqlContext.implicits._
 
